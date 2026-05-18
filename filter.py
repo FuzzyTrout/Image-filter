@@ -11,6 +11,5 @@ class filters:
         save = image.save("file_name")
         return save
 
-
     def blur(self, img):
         pass
