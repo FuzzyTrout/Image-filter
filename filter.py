@@ -11,6 +11,5 @@ class filters:
         
         return image
 
-
     def blur(self, image):
         pass
