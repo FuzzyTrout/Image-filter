@@ -1,8 +1,9 @@
-from PIL import image
-from filters import grayscale, blur
+from PIL import Image
+from filter import filters
 
-img = open("images/1.png").convert("RGB")
+img = Image.open("images/2.jpg").convert("RGB")
 
-img = grayscale(img)
+f = filters()
+img = f.grayscale(img)
 
-img.save("out.png")
+img.save("images/filtered/out.png")
