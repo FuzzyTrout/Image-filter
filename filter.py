@@ -9,7 +9,7 @@ class filters:
              grey = round(0.299*r + 0.587*g + 0.114*b)
              image_load[row,column]= (grey,grey,grey)
         
-        return imsgag
+        return image
 
     def blur(self, image):
         pass
