@@ -1,5 +1,6 @@
 class filters:
 
+    # grayscale filter
     def graysclae(self, image):
         image_load = image.load()
         width, height = image.size
