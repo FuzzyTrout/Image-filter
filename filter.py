@@ -45,8 +45,8 @@ class filters:
                 sum_b = [0] * levels
 
                 # these 2 loops reach for 11x11 grid arround pixel in consideration.
-                for i in range(-5,6):
-                    for j in range(-5,6):
+                for i in range(-3,4):
+                    for j in range(-3,4):
 
                         # we check if our frid is getting out of image boundaries, iif yes, then bound it to the edge of the image. This way we can handle edge pixels without going out of bounds.
                         if row+i >= 0 and row+i < width and column+j >= 0 and column+j < height:
