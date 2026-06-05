@@ -271,3 +271,50 @@ class filters:
         sketch_image = self.edge_detect(gray_image)
         inverted_sketch = self.invert(sketch_image)
         return inverted_sketch
+        def pixelate(self, image):
+        image = image.convert("RGB")
+        image_load = image.load()
+        width, height = image.size
+        block_size = 1000
+
+        for x in range(0, width, block_size):
+            for y in range(0, height, block_size):
+
+                # Collect all pixels in this block
+                red, green, blue = 0, 0, 0
+                count = 0
+
+                for bx in range(block_size):
+                    for by in range(block_size):
+                        px = min(x + bx, width - 1)
+                        py = min(y + by, height - 1)
+                        r, g, b = image_load[px, py]
+                        red   += r
+                        green += g
+                        blue  += b
+                        count += 1
+
+                # Average colour for the whole block (outside inner loops)
+                avg_r = red   // count
+                avg_g = green // count
+                avg_b = blue  // count
+
+                # Paint every pixel in the block with the average
+                for bx in range(block_size):
+                    for by in range(block_size):
+                        px = min(x + bx, width - 1)
+                        py = min(y + by, height - 1)
+                        image_load[px, py] = (avg_r, avg_g, avg_b)
+
+        return image
+
+
+# create a filters object
+f = filters()
+
+# pick whichever filter you want to run
+result = f.pixelate(image)
+result = f.painterly(result)
+# save the result
+result.save("output.jpg")
+print("done!")
