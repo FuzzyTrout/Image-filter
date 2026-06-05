@@ -271,7 +271,7 @@ class filters:
         sketch_image = self.edge_detect(gray_image)
         inverted_sketch = self.invert(sketch_image)
         return inverted_sketch
-        def pixelate(self, image):
+    def pixelate(self, image):
         image = image.convert("RGB")
         image_load = image.load()
         width, height = image.size
