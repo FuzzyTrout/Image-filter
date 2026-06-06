@@ -647,4 +647,31 @@ class filters:
                 )
 
         return image
+   def chromatic_aberration(self, image):
+        image_load = image.load()
+        width, height = image.size
+        color1 = (20, 0, 80)
+        color2 = (255, 140, 0)
+        color3 = (255, 50, 50)
+        for row in range(width):
+          for column in range(height):
+            r, g, b = image_load[row, column]
+            brightness = (0.299*r + 0.587*g + 0.114*b) / 255
+            if brightness < 0.5:
+              t = brightness / 0.5
+              result_r = color1[0] * (1-t) + color2[0] * t
+              result_g = color1[1] * (1-t) + color2[1] * t 
+              result_b = color1[2] * (1-t) + color2[2] * t
+            else:
+              t = (brightness-0.5) / 0.5
+              result_r = color2[0] * (1-t) + color3[0] * t
+              result_g = color2[1] * (1-t) + color3[1] * t
+              result_b = color2[2] * (1-t) + color3[2] * t
+            result = (round(result_r), round(result_g), round(result_b))
+
+            # only apply to ~50% of pixels randomly
+            if random.random() > 0.6:
+                image_load[row, column] = result
+
+        return image
 
