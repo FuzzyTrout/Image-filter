@@ -62,6 +62,35 @@ def apply_horizontal_flip(img):
 def apply_vertical_flip(img):
     return ImageOps.flip(img)
 
+def apply_vignette(img, strength=1.0):
+    img = img.convert("RGB")
+    arr = np.array(img, dtype=np.float64)
+    height, width = arr.shape[:2]
+
+    # Build coordinate grids normalised to [-1, 1]
+    cx, cy = width / 2.0, height / 2.0
+    max_dist = (cx**2 + cy**2) ** 0.5
+
+    # Create meshgrid of pixel positions
+    xs = np.arange(width)
+    ys = np.arange(height)
+    xx, yy = np.meshgrid(xs, ys)          # shape: (H, W)
+
+    # Distance of every pixel from center
+    dist = ((xx - cx)**2 + (yy - cy)**2) ** 0.5
+
+    # Fraction 0‑1 then apply strength
+    fraction = (dist / max_dist) * strength
+    fraction = np.clip(fraction, 0, 1)
+
+    # Darken: multiply each channel by (1 - fraction)
+    factor = 1.0 - fraction                # shape (H, W)
+    factor = factor[:, :, np.newaxis]      # broadcast over RGB
+
+    result = np.clip(arr * factor, 0, 255).astype(np.uint8)
+    return Image.fromarray(result)
+
+
 FILTERS = {
     "grayscale":       ("Grayscale",        apply_grayscale),
     "invert":          ("Invert",           apply_invert),
@@ -73,6 +102,7 @@ FILTERS = {
     "painterly":       ("Painterly",        apply_painterly),
     "horizontal_flip": ("Horizontal Flip",  apply_horizontal_flip),
     "vertical_flip":   ("Vertical Flip",    apply_vertical_flip),
+    "vignette":        ("Vignette",         apply_vignette),
 }
 
 # ── Routes ────────────────────────────────────────────────────────────────────
@@ -86,7 +116,7 @@ def apply_filter():
     if "image" not in request.files:
         return jsonify({"error": "No image provided"}), 400
 
-    file = request.files["image"]
+    file        = request.files["image"]
     filter_name = request.form.get("filter", "grayscale")
 
     if filter_name not in FILTERS:
@@ -94,12 +124,17 @@ def apply_filter():
 
     try:
         img = Image.open(file.stream).convert("RGB")
-
-        # Limit size for performance
         img.thumbnail((1200, 1200), Image.LANCZOS)
 
         _, fn = FILTERS[filter_name]
-        result = fn(img)
+
+        # Pass strength only for vignette
+        if filter_name == "vignette":
+            strength = float(request.form.get("strength", 1.0))
+            strength = max(0.0, min(1.0, strength))   # clamp to [0, 1]
+            result = fn(img, strength=strength)
+        else:
+            result = fn(img)
 
         buf = io.BytesIO()
         result.save(buf, format="JPEG", quality=90)
