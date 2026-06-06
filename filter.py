@@ -22,7 +22,55 @@ class filters:
 
     def sharpen(self, image):
         pass
-    
+
+    def gaussian_blur(self, image):
+        image_load = image.load()
+        width, height = image.size
+        copy = image.copy().load()
+
+        print(image.size)
+                
+        kernel = [
+                    [0, 0, 1, 2, 1, 0, 0],
+                    [0, 3, 13, 22, 13, 3, 0],
+                    [1, 13, 59, 97, 59, 13, 1],
+                    [2, 22, 97, 159, 97, 22, 2],
+                    [1, 13, 59, 97, 59, 13, 1],
+                    [0, 3, 13, 22, 13, 3, 0],
+                    [0, 0, 1, 2, 1, 0, 0]
+                ]
+
+        for row in range(width):
+            if row % 100 == 0:
+                print(f"Row {row} done")
+
+            for column in range(height):
+
+                r_total = 0
+                g_total = 0
+                b_total = 0
+                count = 0
+
+
+
+                for i in range(-3,4):
+                    for j in range(-3,4):
+
+                        if (row+i >= 0 and row+i < width and column+j >= 0 and column+j < height):
+
+                            n = kernel[i+3][j+3]
+                            r, g, b = copy[row+i,column+j]
+
+                            count += n
+
+                            r_total += (r * n)
+                            g_total += (g * n)
+                            b_total += (b * n)
+
+                image_load[row,column] = (r_total//count, g_total//count, b_total//count)
+
+        return image
+
     def invert(self, image):
         '''inverts image colors, ig black to white. not much used alone but in combinition with others'''
 
@@ -36,77 +84,150 @@ class filters:
         
         return image
 
+
     def edge_detect(self, image):
-        image_load = image.load()
-        copy = image.copy().load()
-        width, height = image.size
+        gray_image = self.grayscale(image)
+        gaussian_image = self.gaussian_blur(gray_image)
+
+        image_load = gaussian_image.load()
+        copy = gaussian_image.copy().load()
+        width, height = gaussian_image.size
+
+        magnitude = [[0 for _ in range(height)] for _ in range(width)]
+        direction = [[0 for _ in range(height)] for _ in range(width)]
+
+        sobel_x = [
+            [-1, 0, 1],
+            [-2, 0, 2],
+            [-1, 0, 1]
+        ]
+
+        sobel_y = [
+            [-1, -2, -1],
+            [ 0,  0,  0],
+            [ 1,  2,  1]
+        ]
 
         for row in range(width):
             for column in range(height):
                 
-                gxr = 0
-                gxg = 0
-                gxb = 0
-                gyr = 0
-                gyg = 0
-                gyb = 0
-                p1r = 0
-                p1g = 0
-                p1b = 0
-                p2r = 0
-                p2g = 0
-                p2b = 0
-
+                gx = 0
+                gy = 0
                 
-
                 for i in range(-1,2):
                     for j in range(-1,2):
 
                         if (row+i >= 0 and row+i < width and column+j >= 0 and column+j < height):
 
-                            if j == 0 :
-                                p1r += 0
-                                p1g += 0
-                                p1b += 0
+                            p = copy[row+i,column+j][0]  # since it's grayscale, r=g=b, so we can just take one channel
+                            gx += p * sobel_x[i+1][j+1]
+                            gy += p * sobel_y[i+1][j+1]
+                                    
 
-                            elif ( (j == -1 or j == 1) and (i == 0 or i == -1 or i == 1) ):
-                                r, g, b = copy[row+i,column+j]
-                                p1r += r * (j * (2 - (i**2)))
-                                p1g += g * (j * (2 - i**2))
-                                p1b += b * (j * (2 - i**2))
+                g = int(math.sqrt(gx**2 + gy**2))
+                if g > 255:
+                    g = 255
 
-                            if ( i == 0):
-                                p2r += 0
-                                p2g += 0
-                                p2b += 0
+                angle = math.degrees(math.atan2(gy, gx))
+                if angle < 0:
+                    angle += 180
 
-                            elif( ((i == -1) or (i == 1)) and ((j == 0) or (j == -1) or (j == 1)) ):
-                                r, g, b = copy[row+i,column+j]
-                                p2r += r * (i * (2 - (j**2)))
-                                p2g += g * (i * (2 - j**2))
-                                p2b += b * (i * (2 - j**2))
+                if angle < 22.5 or angle >= 157.5:
+                    angle = 0
+                elif angle < 67.5:
+                    angle = 45
+                elif angle < 112.5:
+                    angle = 90
+                else:
+                    angle = 135
 
-                gxr = p1r
-                gxg = p1g
-                gxb = p1b
-                gyr = p2r
-                gyg = p2g
-                gyb = p2b
+                magnitude[row][column] = g
+                direction[row][column] = angle
+            
+        new_magnitude = [[0 for _ in range(height)] for _ in range(width)]
 
-                gr = round((gxr**2 + gyr**2)**0.5)
-                if gr > 255:
-                    gr = 255
-                gg = round((gxg**2 + gyg**2)**0.5)
-                if gg > 255:
-                    gg = 255
-                gb = round((gxb**2 + gyb**2)**0.5)
-                if gb > 255:
-                    gb = 255
+        for row in range(1, width - 1):
+            for column in range(1, height - 1):
 
-                image_load[row,column] = (gr, gg, gb)
+                current = magnitude[row][column]
+                angle = direction[row][column]
 
+                if angle == 0:
+                    neighbor1 = magnitude[row][column - 1]
+                    neighbor2 = magnitude[row][column + 1]
+
+                elif angle == 45:
+                    neighbor1 = magnitude[row - 1][column + 1]
+                    neighbor2 = magnitude[row + 1][column - 1]
+
+                elif angle == 90:
+                    neighbor1 = magnitude[row - 1][column]
+                    neighbor2 = magnitude[row + 1][column]
+
+                else:  # 135
+                    neighbor1 = magnitude[row - 1][column - 1]
+                    neighbor2 = magnitude[row + 1][column + 1]
+
+                if current >= neighbor1 and current >= neighbor2:
+                    new_magnitude[row][column] = current
+                else:
+                    new_magnitude[row][column] = 0
+
+        high = 30
+        low = 15
+
+        strong = 255
+        weak = 75
+        
+        nms = new_magnitude
+
+        dt = [[0 for _ in range(height)] for _ in range(width)]
+
+        for row in range(width):
+            for column in range(height):
+
+                val = nms[row][column]
+
+                if val >= high:
+                    dt[row][column] = 255   # strong edge
+
+                elif val >= low:
+                    dt[row][column] = 75    # weak edge
+
+                else:
+                    dt[row][column] = 0     # noise
+
+        final = [[0 for _ in range(height)] for _ in range(width)]
+
+        for row in range(1, width - 1):
+            for column in range(1, height - 1):
+
+                if dt[row][column] == 255:
+                    final[row][column] = 255
+
+                elif dt[row][column] == 75:
+                    # check neighbors
+                    if (
+                        dt[row-1][column-1] == 255 or
+                        dt[row-1][column] == 255 or
+                        dt[row-1][column+1] == 255 or
+                        dt[row][column-1] == 255 or
+                        dt[row][column+1] == 255 or
+                        dt[row+1][column-1] == 255 or
+                        dt[row+1][column] == 255 or
+                        dt[row+1][column+1] == 255
+                    ):
+                        final[row][column] = 255
+                    else:
+                        final[row][column] = 0
+
+        for row in range(width):
+            for column in range(height):
+                image_load[row, column] = (final[row][column],
+                                        final[row][column],
+                                        final[row][column])
                 
-        return image
+        return  image
 
     def painterly(self,image): 
 
