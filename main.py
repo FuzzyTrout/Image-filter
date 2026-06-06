@@ -1,9 +1,6 @@
-from PIL import Image
-from filter import filters
+def main():
+    print("Hello from filters!")
 
-img = Image.open("images/2.jpg").convert("RGB")
 
-f = filters()
-img1 = f.pixelate(img)
-
-img1.save("images/filtered/out.png")
+if __name__ == "__main__":
+    main()
