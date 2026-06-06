@@ -108,7 +108,24 @@ class filters:
                 )
 
         return image
-        
+
+    def quantize(self, image):
+
+        image_load = image.load()
+        width, height = image.size
+
+        for x in range(width):
+            for y in range(height):
+
+                r, g, b = image_load[x, y]
+
+                r = (r // 64) * 64
+                g = (g // 64) * 64
+                b = (b // 64) * 64
+
+                image_load[x, y] = (r, g, b)
+
+        return image
 
     def gaussian_blur(self, image):
         image_load = image.load()
@@ -158,7 +175,6 @@ class filters:
 
         return image
         
-
     def invert(self, image):
         '''inverts image colors, ig black to white. not much used alone but in combinition with others'''
 
@@ -171,7 +187,6 @@ class filters:
                 image_load[row,column] = (255-r, 255-g, 255-b)
         
         return image
-
 
     def edge_detect(self, image):
         gray_image = self.grayscale(image)
@@ -552,13 +567,66 @@ class filters:
                 image_load[row, column] = (round(new_r), round(new_g), round(new_b))
         return image
 
+    def cartoon(self, image):
 
-# create a filters object
-# f = filters()
+        cartoon = self.gaussian_blur(image.copy())
+        cartoon = self.quantize(cartoon)
 
-# # # pick whichever filter you want to run
-# result = f.pixelate(image)
-# result = f.painterly(result)
-# # save the result
-# result.save("output.jpg")
-# print("done!")
+        edges = self.edge_detect(image.copy())
+        edges = self.invert(edges)
+
+        cartoon_load = cartoon.load()
+        edge_load = edges.load()
+
+        width, height = image.size
+
+        for x in range(width):
+            for y in range(height):
+
+                if edge_load[x, y][0] < 128:
+                    cartoon_load[x, y] = (0, 0, 0)
+
+        return cartoon
+    
+    def emboss(self, image):
+                
+        image_load = image.load()
+        width, height = image.size
+        copy = image.copy().load()
+
+        for row in range(width):
+            if (row % 100 == 0):
+                print(f"row {row} done")
+
+            for column in range(height):
+
+                r_total = 0
+                g_total = 0
+                b_total = 0
+
+                for i in range(-1, 2):
+                    for j in range(-1, 2):
+
+                        if (0 <= row+i < width and
+                            0 <= column+j < height):
+
+                            r, g, b = copy[row+i, column+j]
+
+                            n = (i + 1) * (j + 1)  # simple emboss kernel
+
+                            r_total += r * n
+                            g_total += g * n
+                            b_total += b * n
+
+                r_total = max(0, min(255, r_total // 9 + 128))
+                g_total = max(0, min(255, g_total // 9 + 128))
+                b_total = max(0, min(255, b_total // 9 + 128))
+
+                image_load[row, column] = (
+                    r_total,
+                    g_total,
+                    b_total
+                )
+
+        return image
+
