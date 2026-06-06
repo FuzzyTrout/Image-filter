@@ -17,7 +17,6 @@ class filters:
         return image
 
     def blur(self, image):
-        pass
         image_load = image.load()
         width, height = image.size
         copy = image.copy().load()
@@ -66,7 +65,50 @@ class filters:
         return image
 
     def sharpen(self, image):
-        pass
+
+        image_load = image.load()
+        copy = image.copy().load()
+        width, height = image.size
+
+        kernel = [
+            [0, -1, 0],
+            [-1, 5, -1],
+            [0, -1, 0]
+        ]
+
+        for row in range(width):
+            for column in range(height):
+
+                r_total = 0
+                g_total = 0
+                b_total = 0
+
+                for i in range(-1, 2):
+                    for j in range(-1, 2):
+
+                        if (0 <= row+i < width and
+                            0 <= column+j < height):
+
+                            r, g, b = copy[row+i, column+j]
+
+                            n = kernel[i+1][j+1]
+
+                            r_total += r * n
+                            g_total += g * n
+                            b_total += b * n
+
+                r_total = max(0, min(255, r_total))
+                g_total = max(0, min(255, g_total))
+                b_total = max(0, min(255, b_total))
+
+                image_load[row, column] = (
+                    r_total,
+                    g_total,
+                    b_total
+                )
+
+        return image
+        
 
     def gaussian_blur(self, image):
         image_load = image.load()
