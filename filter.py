@@ -308,6 +308,23 @@ class filters:
                         image_load[px, py] = (avg_r, avg_g, avg_b)
 
         return image
+  def vigennete(self, image, strength = 1.0):
+
+     image_load = image.load()
+     width, height = image.size
+     max_height = height / 2
+     max_width = width / 2
+     max_distance = (max_height**2 + max_width**2)**0.5
+     for row in range(width): 
+       for column in range(height):
+         distance = ((row - max_width)**2 + (column - max_height)**2)**0.5
+         farction = distance / max_distance
+         r, g, b = image_load[row, column]
+         new_r = r * (1 - farction * strength) 
+         new_g = g * (1 - farction * strength)
+         new_b = b * (1- farction * strength) 
+         image_load[row, column] = (round(new_r), round(new_g), round(new_b))
+     return image
 
 
 # create a filters object
