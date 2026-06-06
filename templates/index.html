@@ -8,361 +8,86 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
-    --bg: #0d0d0f;
-    --surface: #17171a;
-    --surface2: #1f1f24;
-    --border: rgba(255,255,255,0.07);
-    --border-bright: rgba(255,255,255,0.15);
-    --text: #e8e8ec;
-    --muted: #6b6b78;
-    --accent: #c8f542;
-    --accent-dim: rgba(200,245,66,0.12);
-    --danger: #ff5e5e;
-    --radius: 12px;
-    --mono: 'DM Mono', monospace;
-    --sans: 'Sora', sans-serif;
+    --bg: #0d0d0f; --surface: #17171a; --surface2: #1f1f24;
+    --border: rgba(255,255,255,0.07); --border-bright: rgba(255,255,255,0.15);
+    --text: #e8e8ec; --muted: #6b6b78; --accent: #c8f542;
+    --accent-dim: rgba(200,245,66,0.12); --danger: #ff5e5e;
+    --radius: 12px; --mono: 'DM Mono', monospace; --sans: 'Sora', sans-serif;
   }
+  body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; display: grid; grid-template-rows: auto 1fr auto; }
+  header { padding: 20px 32px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+  .logo { font-family: var(--mono); font-size: 20px; font-weight: 500; color: var(--accent); letter-spacing: -0.5px; }
+  .logo-tag { font-family: var(--mono); font-size: 11px; color: var(--muted); background: var(--surface2); border: 1px solid var(--border); padding: 3px 8px; border-radius: 4px; }
+  main { display: grid; grid-template-columns: 280px 1fr; overflow: hidden; }
+  aside { border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; }
+  .sidebar-section { padding: 20px; border-bottom: 1px solid var(--border); }
+  .sidebar-label { font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; margin-bottom: 14px; }
+  .upload-zone { border: 1.5px dashed var(--border-bright); border-radius: var(--radius); padding: 28px 16px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; }
+  .upload-zone:hover, .upload-zone.drag-over { border-color: var(--accent); background: var(--accent-dim); }
+  .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .upload-icon { font-size: 28px; margin-bottom: 8px; display: block; }
+  .upload-text { font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .upload-text strong { color: var(--accent); font-weight: 600; }
+  .filter-list { display: flex; flex-direction: column; gap: 4px; }
+  .filter-btn { background: none; border: none; color: var(--text); font-family: var(--sans); font-size: 13px; padding: 9px 12px; border-radius: 8px; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 10px; transition: all 0.15s; width: 100%; }
+  .filter-btn:hover { background: var(--surface2); }
+  .filter-btn.active { background: var(--accent-dim); color: var(--accent); }
+  .filter-btn .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border-bright); flex-shrink: 0; transition: background 0.15s; }
+  .filter-btn.active .dot { background: var(--accent); }
 
-  body {
-    font-family: var(--sans);
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    display: grid;
-    grid-template-rows: auto 1fr auto;
-  }
+  /* ── Vignette slider panel ── */
+  .slider-panel { display: none; flex-direction: column; gap: 12px; margin-top: 2px; padding: 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); animation: fadeIn 0.2s ease; }
+  .slider-panel.visible { display: flex; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
 
-  /* Header */
-  header {
-    padding: 20px 32px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
+  /* Circle preview */
+  .vignette-preview { display: flex; justify-content: center; align-items: center; padding: 8px 0 4px; }
+  #vignetteCanvas { border-radius: 50%; border: 1px solid var(--border-bright); display: block; }
 
-  .logo {
-    font-family: var(--mono);
-    font-size: 20px;
-    font-weight: 500;
-    color: var(--accent);
-    letter-spacing: -0.5px;
-  }
+  .slider-header { display: flex; justify-content: space-between; align-items: center; }
+  .slider-name { font-family: var(--mono); font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .slider-value { font-family: var(--mono); font-size: 13px; color: var(--accent); font-weight: 500; min-width: 32px; text-align: right; }
 
-  .logo-tag {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--muted);
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    padding: 3px 8px;
-    border-radius: 4px;
-  }
+  .slider-track { position: relative; height: 4px; background: var(--border-bright); border-radius: 2px; margin: 4px 0; }
+  .slider-fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); border-radius: 2px; transition: width 0.05s; pointer-events: none; }
+  input[type="range"] { position: absolute; inset: 0; width: 100%; opacity: 0; cursor: pointer; height: 20px; top: -8px; margin: 0; }
 
-  /* Main layout */
-  main {
-    display: grid;
-    grid-template-columns: 280px 1fr;
-    overflow: hidden;
-  }
-
-  /* Sidebar */
-  aside {
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-  }
-
-  .sidebar-section {
-    padding: 20px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .sidebar-label {
-    font-family: var(--mono);
-    font-size: 10px;
-    letter-spacing: 1.5px;
-    color: var(--muted);
-    text-transform: uppercase;
-    margin-bottom: 14px;
-  }
-
-  /* Upload zone */
-  .upload-zone {
-    border: 1.5px dashed var(--border-bright);
-    border-radius: var(--radius);
-    padding: 28px 16px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    position: relative;
-  }
-
-  .upload-zone:hover, .upload-zone.drag-over {
-    border-color: var(--accent);
-    background: var(--accent-dim);
-  }
-
-  .upload-zone input[type="file"] {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    cursor: pointer;
-    width: 100%;
-    height: 100%;
-  }
-
-  .upload-icon {
-    font-size: 28px;
-    margin-bottom: 8px;
-    display: block;
-  }
-
-  .upload-text {
-    font-size: 13px;
-    color: var(--muted);
-    line-height: 1.5;
-  }
-
-  .upload-text strong {
-    color: var(--accent);
-    font-weight: 600;
-  }
-
-  /* Filter list */
-  .filter-list {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .filter-btn {
-    background: none;
-    border: none;
-    color: var(--text);
-    font-family: var(--sans);
-    font-size: 13px;
-    padding: 9px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    text-align: left;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    transition: all 0.15s;
-  }
-
-  .filter-btn:hover {
-    background: var(--surface2);
-  }
-
-  .filter-btn.active {
-    background: var(--accent-dim);
-    color: var(--accent);
-  }
-
-  .filter-btn .dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--border-bright);
-    flex-shrink: 0;
-    transition: background 0.15s;
-  }
-
-  .filter-btn.active .dot {
-    background: var(--accent);
-  }
+  /* Tick marks */
+  .slider-ticks { display: flex; justify-content: space-between; padding: 0 1px; }
+  .tick { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .tick-mark { width: 1px; height: 5px; background: var(--border-bright); }
+  .tick-mark.major { background: var(--muted); height: 7px; }
+  .tick-label { font-family: var(--mono); font-size: 9px; color: var(--muted); }
 
   /* Apply button */
-  .apply-btn {
-    margin: 20px;
-    background: var(--accent);
-    color: #0d0d0f;
-    border: none;
-    border-radius: var(--radius);
-    padding: 13px;
-    font-family: var(--sans);
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    width: calc(100% - 40px);
-  }
-
-  .apply-btn:hover {
-    filter: brightness(1.1);
-    transform: translateY(-1px);
-  }
-
-  .apply-btn:active {
-    transform: translateY(0);
-  }
-
-  .apply-btn:disabled {
-    opacity: 0.35;
-    cursor: not-allowed;
-    transform: none;
-  }
-
-  /* Canvas area */
-  .canvas-area {
-    display: flex;
-    flex-direction: column;
-    padding: 28px;
-    gap: 20px;
-    overflow-y: auto;
-  }
-
-  /* Empty state */
-  .empty-state {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    color: var(--muted);
-  }
-
-  .empty-state .big-icon {
-    font-size: 56px;
-    opacity: 0.3;
-  }
-
-  .empty-state p {
-    font-size: 14px;
-  }
-
-  /* Image comparison */
-  .comparison {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    display: none;
-  }
-
+  .apply-btn { margin: 20px; background: var(--accent); color: #0d0d0f; border: none; border-radius: var(--radius); padding: 13px; font-family: var(--sans); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; width: calc(100% - 40px); }
+  .apply-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  .apply-btn:active { transform: translateY(0); }
+  .apply-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+  .canvas-area { display: flex; flex-direction: column; padding: 28px; gap: 20px; overflow-y: auto; }
+  .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--muted); }
+  .empty-state .big-icon { font-size: 56px; opacity: 0.3; }
+  .empty-state p { font-size: 14px; }
+  .comparison { display: none; grid-template-columns: 1fr 1fr; gap: 16px; }
   .comparison.visible { display: grid; }
-
-  .img-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-  }
-
-  .img-card-header {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .img-card-label {
-    font-family: var(--mono);
-    font-size: 11px;
-    letter-spacing: 0.8px;
-    color: var(--muted);
-    text-transform: uppercase;
-  }
-
-  .img-card img {
-    width: 100%;
-    display: block;
-    object-fit: contain;
-    max-height: 460px;
-    background: #0a0a0c;
-  }
-
-  .download-btn {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    color: var(--text);
-    font-family: var(--mono);
-    font-size: 11px;
-    padding: 5px 10px;
-    border-radius: 6px;
-    cursor: pointer;
-    text-decoration: none;
-    transition: all 0.15s;
-  }
-
-  .download-btn:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-
-  /* Filter tag */
-  .filter-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: var(--accent-dim);
-    color: var(--accent);
-    font-family: var(--mono);
-    font-size: 11px;
-    padding: 4px 10px;
-    border-radius: 20px;
-    border: 1px solid rgba(200,245,66,0.2);
-  }
-
-  /* Loading spinner */
-  .spinner {
-    display: none;
-    width: 16px;
-    height: 16px;
-    border: 2px solid rgba(13,13,15,0.3);
-    border-top-color: #0d0d0f;
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-  }
-
+  .img-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .img-card-header { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .img-card-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.8px; color: var(--muted); text-transform: uppercase; }
+  .img-card img { width: 100%; display: block; object-fit: contain; max-height: 460px; background: #0a0a0c; }
+  .download-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-family: var(--mono); font-size: 11px; padding: 5px 10px; border-radius: 6px; cursor: pointer; text-decoration: none; transition: all 0.15s; }
+  .download-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .filter-tag { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-dim); color: var(--accent); font-family: var(--mono); font-size: 11px; padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(200,245,66,0.2); }
+  .spinner { display: none; width: 16px; height: 16px; border: 2px solid rgba(13,13,15,0.3); border-top-color: #0d0d0f; border-radius: 50%; animation: spin 0.7s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-
   .apply-btn.loading .spinner { display: inline-block; }
   .apply-btn.loading .btn-text { display: none; }
-
-  /* Error message */
-  .error-msg {
-    background: rgba(255,94,94,0.1);
-    border: 1px solid rgba(255,94,94,0.3);
-    color: var(--danger);
-    font-size: 13px;
-    padding: 12px 16px;
-    border-radius: 8px;
-    display: none;
-  }
-
+  .error-msg { background: rgba(255,94,94,0.1); border: 1px solid rgba(255,94,94,0.3); color: var(--danger); font-size: 13px; padding: 12px 16px; border-radius: 8px; display: none; }
   .error-msg.visible { display: block; }
-
-  /* Info bar */
-  .info-bar {
-    display: none;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-
+  .info-bar { display: none; align-items: center; gap: 12px; flex-wrap: wrap; }
   .info-bar.visible { display: flex; }
-
-  .info-item {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--muted);
-  }
-
-  /* Footer */
-  footer {
-    padding: 12px 32px;
-    border-top: 1px solid var(--border);
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--muted);
-  }
+  .info-item { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  footer { padding: 12px 32px; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 11px; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -394,9 +119,48 @@
         <button class="filter-btn {% if loop.first %}active{% endif %}"
                 data-filter="{{ key }}"
                 onclick="selectFilter(this, '{{ key }}')">
-          <span class="dot"></span>
-          {{ label }}
+          <span class="dot"></span>{{ label }}
         </button>
+        {% if key == 'vignette' %}
+        <!-- Slider panel — only visible when vignette is active -->
+        <div class="slider-panel" id="vignetteSliderPanel">
+
+          <!-- Circle preview -->
+          <div class="vignette-preview">
+            <canvas id="vignetteCanvas" width="80" height="80"></canvas>
+          </div>
+
+          <!-- Value readout -->
+          <div class="slider-header">
+            <span class="slider-name">Strength</span>
+            <span class="slider-value" id="vignetteValue">1.00</span>
+          </div>
+
+          <!-- Slider track -->
+          <div class="slider-track">
+            <div class="slider-fill" id="vignetteFill" style="width:100%"></div>
+            <input type="range" id="vignetteStrength"
+                   min="0" max="1" step="0.05" value="1"
+                   oninput="updateSlider(this.value)">
+          </div>
+
+          <!-- Tick marks: 0.0 0.1 0.2 … 1.0 -->
+          <div class="slider-ticks">
+            <div class="tick"><div class="tick-mark major"></div><span class="tick-label">0.0</span></div>
+            <div class="tick"><div class="tick-mark"></div></div>
+            <div class="tick"><div class="tick-mark"></div></div>
+            <div class="tick"><div class="tick-mark"></div></div>
+            <div class="tick"><div class="tick-mark"></div></div>
+            <div class="tick"><div class="tick-mark major"></div><span class="tick-label">0.5</span></div>
+            <div class="tick"><div class="tick-mark"></div></div>
+            <div class="tick"><div class="tick-mark"></div></div>
+            <div class="tick"><div class="tick-mark"></div></div>
+            <div class="tick"><div class="tick-mark"></div></div>
+            <div class="tick"><div class="tick-mark major"></div><span class="tick-label">1.0</span></div>
+          </div>
+
+        </div>
+        {% endif %}
         {% endfor %}
       </div>
     </div>
@@ -412,9 +176,7 @@
       <span class="big-icon">🖼</span>
       <p>Upload an image to get started</p>
     </div>
-
     <div class="error-msg" id="errorMsg"></div>
-
     <div class="info-bar" id="infoBar">
       <span class="info-item" id="fileInfo"></span>
       <span class="filter-tag" id="filterTag">
@@ -422,12 +184,9 @@
         <span id="filterTagName">Grayscale</span>
       </span>
     </div>
-
     <div class="comparison" id="comparison">
       <div class="img-card">
-        <div class="img-card-header">
-          <span class="img-card-label">Original</span>
-        </div>
+        <div class="img-card-header"><span class="img-card-label">Original</span></div>
         <img id="originalImg" src="" alt="Original image">
       </div>
       <div class="img-card">
@@ -441,59 +200,90 @@
   </div>
 </main>
 
-<footer>filtro/ — image filter studio &nbsp;·&nbsp; 10 filters available</footer>
+<footer>filtro/ — image filter studio &nbsp;·&nbsp; {{ filters|length }} filters available</footer>
 
 <script>
 let selectedFilter = '{{ filters.keys()|list|first }}';
 let currentFile = null;
+let vignetteStrengthValue = 1.0;
 
-const fileInput = document.getElementById('fileInput');
-const applyBtn = document.getElementById('applyBtn');
-const originalImg = document.getElementById('originalImg');
-const filteredImg = document.getElementById('filteredImg');
-const comparison = document.getElementById('comparison');
-const emptyState = document.getElementById('emptyState');
-const errorMsg = document.getElementById('errorMsg');
-const infoBar = document.getElementById('infoBar');
-const filterTagName = document.getElementById('filterTagName');
-const downloadBtn = document.getElementById('downloadBtn');
-const fileInfo = document.getElementById('fileInfo');
-const uploadZone = document.getElementById('uploadZone');
+const fileInput       = document.getElementById('fileInput');
+const applyBtn        = document.getElementById('applyBtn');
+const originalImg     = document.getElementById('originalImg');
+const filteredImg     = document.getElementById('filteredImg');
+const comparison      = document.getElementById('comparison');
+const emptyState      = document.getElementById('emptyState');
+const errorMsg        = document.getElementById('errorMsg');
+const infoBar         = document.getElementById('infoBar');
+const filterTagName   = document.getElementById('filterTagName');
+const downloadBtn     = document.getElementById('downloadBtn');
+const fileInfo        = document.getElementById('fileInfo');
+const uploadZone      = document.getElementById('uploadZone');
+const sliderPanel     = document.getElementById('vignetteSliderPanel');
+const vignetteDisplay = document.getElementById('vignetteValue');
+const vignetteFill    = document.getElementById('vignetteFill');
+const vignetteCanvas  = document.getElementById('vignetteCanvas');
 
+// ── Draw the circle preview ──────────────────────────────────────────────────
+function drawVignetteCircle(strength) {
+  const canvas = vignetteCanvas;
+  const ctx    = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  const cx = w / 2, cy = h / 2, r = w / 2;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // White filled circle base
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fillStyle = '#ffffff';
+  ctx.fill();
+
+  // Radial gradient overlay — dark at edges, clear at center
+  const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+  grad.addColorStop(0,   `rgba(0,0,0,0)`);
+  grad.addColorStop(0.4, `rgba(0,0,0,0)`);
+  grad.addColorStop(1,   `rgba(0,0,0,${strength.toFixed(2)})`);
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+}
+
+// ── Slider update ────────────────────────────────────────────────────────────
+function updateSlider(val) {
+  vignetteStrengthValue      = parseFloat(val);
+  vignetteDisplay.textContent = vignetteStrengthValue.toFixed(2);
+  vignetteFill.style.width   = (vignetteStrengthValue * 100) + '%';
+  drawVignetteCircle(vignetteStrengthValue);
+}
+
+// Draw initial circle at strength 1
+drawVignetteCircle(1.0);
+
+// ── Filter selection ─────────────────────────────────────────────────────────
 function selectFilter(btn, key) {
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   selectedFilter = key;
   filterTagName.textContent = btn.textContent.trim();
+  sliderPanel
+    ? sliderPanel.classList.toggle('visible', key === 'vignette')
+    : null;
 }
 
-function showError(msg) {
-  errorMsg.textContent = msg;
-  errorMsg.classList.add('visible');
-}
+function showError(msg) { errorMsg.textContent = msg; errorMsg.classList.add('visible'); }
+function hideError()    { errorMsg.classList.remove('visible'); }
 
-function hideError() {
-  errorMsg.classList.remove('visible');
-}
-
-fileInput.addEventListener('change', e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  loadFile(file);
-});
-
-uploadZone.addEventListener('dragover', e => {
-  e.preventDefault();
-  uploadZone.classList.add('drag-over');
-});
-
+// ── File handling ────────────────────────────────────────────────────────────
+fileInput.addEventListener('change', e => { const f = e.target.files[0]; if (f) loadFile(f); });
+uploadZone.addEventListener('dragover',  e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
 uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
-
 uploadZone.addEventListener('drop', e => {
-  e.preventDefault();
-  uploadZone.classList.remove('drag-over');
-  const file = e.dataTransfer.files[0];
-  if (file && file.type.startsWith('image/')) loadFile(file);
+  e.preventDefault(); uploadZone.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f && f.type.startsWith('image/')) loadFile(f);
 });
 
 function loadFile(file) {
@@ -501,7 +291,6 @@ function loadFile(file) {
   hideError();
   applyBtn.disabled = false;
   emptyState.style.display = 'none';
-
   const reader = new FileReader();
   reader.onload = ev => {
     originalImg.src = ev.target.result;
@@ -513,25 +302,27 @@ function loadFile(file) {
   reader.readAsDataURL(file);
 }
 
+// ── Apply ────────────────────────────────────────────────────────────────────
 async function applyFilter() {
   if (!currentFile) return;
   hideError();
-
   applyBtn.classList.add('loading');
   applyBtn.disabled = true;
 
   const formData = new FormData();
   formData.append('image', currentFile);
   formData.append('filter', selectedFilter);
+  if (selectedFilter === 'vignette') {
+    formData.append('strength', vignetteStrengthValue);
+  }
 
   try {
-    const res = await fetch('/apply', { method: 'POST', body: formData });
+    const res  = await fetch('/apply', { method: 'POST', body: formData });
     const data = await res.json();
-
     if (data.error) {
       showError(data.error);
     } else {
-      filteredImg.src = data.image;
+      filteredImg.src  = data.image;
       downloadBtn.href = data.image;
     }
   } catch (err) {

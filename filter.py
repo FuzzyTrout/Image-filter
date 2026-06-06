@@ -18,8 +18,6 @@ class filters:
 
     def blur(self, image):
         pass
-
-    def gaussian_blur(self, image):
         image_load = image.load()
         width, height = image.size
         copy = image.copy().load()
@@ -69,7 +67,55 @@ class filters:
 
     def sharpen(self, image):
         pass
-    
+
+    def gaussian_blur(self, image):
+        image_load = image.load()
+        width, height = image.size
+        copy = image.copy().load()
+
+        print(image.size)
+                
+        kernel = [
+                    [0, 0, 1, 2, 1, 0, 0],
+                    [0, 3, 13, 22, 13, 3, 0],
+                    [1, 13, 59, 97, 59, 13, 1],
+                    [2, 22, 97, 159, 97, 22, 2],
+                    [1, 13, 59, 97, 59, 13, 1],
+                    [0, 3, 13, 22, 13, 3, 0],
+                    [0, 0, 1, 2, 1, 0, 0]
+                ]
+
+        for row in range(width):
+            if row % 100 == 0:
+                print(f"Row {row} done")
+
+            for column in range(height):
+
+                r_total = 0
+                g_total = 0
+                b_total = 0
+                count = 0
+
+
+
+                for i in range(-3,4):
+                    for j in range(-3,4):
+
+                        if (row+i >= 0 and row+i < width and column+j >= 0 and column+j < height):
+
+                            n = kernel[i+3][j+3]
+                            r, g, b = copy[row+i,column+j]
+
+                            count += n
+
+                            r_total += (r * n)
+                            g_total += (g * n)
+                            b_total += (b * n)
+
+                image_load[row,column] = (r_total//count, g_total//count, b_total//count)
+
+        return image
+
     def invert(self, image):
         '''inverts image colors, ig black to white. not much used alone but in combinition with others'''
 
@@ -82,6 +128,7 @@ class filters:
                 image_load[row,column] = (255-r, 255-g, 255-b)
         
         return image
+
 
     def edge_detect(self, image):
         gray_image = self.grayscale(image)
@@ -426,6 +473,24 @@ class filters:
                         py = min(y + by, height - 1)
                         image_load[px, py] = (avg_r, avg_g, avg_b)
 
+        return image
+    
+    def vigennete(self, image, strength = 1.0):
+
+        image_load = image.load()
+        width, height = image.size
+        max_height = height / 2
+        max_width = width / 2
+        max_distance = (max_height**2 + max_width**2)**0.5
+        for row in range(width): 
+            for column in range(height):
+                distance = ((row - max_width)**2 + (column - max_height)**2)**0.5
+                farction = distance / max_distance
+                r, g, b = image_load[row, column]
+                new_r = r * (1 - farction * strength) 
+                new_g = g * (1 - farction * strength)
+                new_b = b * (1- farction * strength) 
+                image_load[row, column] = (round(new_r), round(new_g), round(new_b))
         return image
 
 
