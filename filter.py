@@ -115,6 +115,7 @@ class filters:
                 image_load[row,column] = (r_total//count, g_total//count, b_total//count)
 
         return image
+        
 
     def invert(self, image):
         '''inverts image colors, ig black to white. not much used alone but in combinition with others'''
@@ -243,6 +244,7 @@ class filters:
                     dt[row][column] = 0     # noise
 
         final = [[0 for _ in range(height)] for _ in range(width)]
+        copy_final = [[0 for _ in range(height)] for _ in range(width)]
 
         for row in range(1, width - 1):
             for column in range(1, height - 1):
@@ -271,6 +273,21 @@ class filters:
                 image_load[row, column] = (final[row][column],
                                         final[row][column],
                                         final[row][column])
+                
+        copy_final = [row[:] for row in final]
+        for x in range(1, width-1):
+            for y in range(1, height-1):
+
+             count = 0
+             
+             for i in range(-1,2):
+                    for j in range(-1,2):
+                        if final[x+i][y+j] == 255:
+                            count += 1
+
+                        if 2 <= count <= 4:
+                             copy_final[x][y] = 255
+
                 
         return  image
 
