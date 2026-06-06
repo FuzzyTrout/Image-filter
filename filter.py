@@ -1,4 +1,6 @@
-import math
+     import math
+import random
+from PIL import Image
 
 
 class filters:
@@ -9,29 +11,29 @@ class filters:
         image_load = image.load()
         width, height = image.size
         for row in range(width):
-           for column in range(height):
-             r,g,b = image_load[row,column]
-             grey = round(0.299*r + 0.587*g + 0.114*b)
-             image_load[row,column]= (grey,grey,grey)
-        
+            for column in range(height):
+                r, g, b = image_load[row, column]
+                grey = round(0.299 * r + 0.587 * g + 0.114 * b)
+                image_load[row, column] = (grey, grey, grey)
+
         return image
 
     def blur(self, image):
+        '''smooths the image using a 7x7 Gaussian kernel'''
+
         image_load = image.load()
         width, height = image.size
         copy = image.copy().load()
 
-        print(image.size)
-                
         kernel = [
-                    [0, 0, 1, 2, 1, 0, 0],
-                    [0, 3, 13, 22, 13, 3, 0],
-                    [1, 13, 59, 97, 59, 13, 1],
-                    [2, 22, 97, 159, 97, 22, 2],
-                    [1, 13, 59, 97, 59, 13, 1],
-                    [0, 3, 13, 22, 13, 3, 0],
-                    [0, 0, 1, 2, 1, 0, 0]
-                ]
+            [0,  0,  1,  2,  1,  0, 0],
+            [0,  3, 13, 22, 13,  3, 0],
+            [1, 13, 59, 97, 59, 13, 1],
+            [2, 22, 97,159, 97, 22, 2],
+            [1, 13, 59, 97, 59, 13, 1],
+            [0,  3, 13, 22, 13,  3, 0],
+            [0,  0,  1,  2,  1,  0, 0],
+        ]
 
         for row in range(width):
             if row % 100 == 0:
@@ -44,36 +46,31 @@ class filters:
                 b_total = 0
                 count = 0
 
-
-
-                for i in range(-3,4):
-                    for j in range(-3,4):
-
-                        if (row+i >= 0 and row+i < width and column+j >= 0 and column+j < height):
-
-                            n = kernel[i+3][j+3]
-                            r, g, b = copy[row+i,column+j]
-
+                for i in range(-3, 4):
+                    for j in range(-3, 4):
+                        if 0 <= row + i < width and 0 <= column + j < height:
+                            n = kernel[i + 3][j + 3]
+                            r, g, b = copy[row + i, column + j]
                             count += n
+                            r_total += r * n
+                            g_total += g * n
+                            b_total += b * n
 
-                            r_total += (r * n)
-                            g_total += (g * n)
-                            b_total += (b * n)
-
-                image_load[row,column] = (r_total//count, g_total//count, b_total//count)
+                image_load[row, column] = (r_total // count, g_total // count, b_total // count)
 
         return image
 
     def sharpen(self, image):
+        '''sharpens edges using a 3x3 kernel'''
 
         image_load = image.load()
         copy = image.copy().load()
         width, height = image.size
 
         kernel = [
-            [0, -1, 0],
-            [-1, 5, -1],
-            [0, -1, 0]
+            [ 0, -1,  0],
+            [-1,  5, -1],
+            [ 0, -1,  0],
         ]
 
         for row in range(width):
@@ -85,14 +82,9 @@ class filters:
 
                 for i in range(-1, 2):
                     for j in range(-1, 2):
-
-                        if (0 <= row+i < width and
-                            0 <= column+j < height):
-
-                            r, g, b = copy[row+i, column+j]
-
-                            n = kernel[i+1][j+1]
-
+                        if 0 <= row + i < width and 0 <= column + j < height:
+                            r, g, b = copy[row + i, column + j]
+                            n = kernel[i + 1][j + 1]
                             r_total += r * n
                             g_total += g * n
                             b_total += b * n
@@ -101,135 +93,78 @@ class filters:
                 g_total = max(0, min(255, g_total))
                 b_total = max(0, min(255, b_total))
 
-                image_load[row, column] = (
-                    r_total,
-                    g_total,
-                    b_total
-                )
+                image_load[row, column] = (r_total, g_total, b_total)
 
         return image
 
     def quantize(self, image):
+        '''reduces the number of distinct colors by snapping each channel to the nearest multiple of 64'''
 
         image_load = image.load()
         width, height = image.size
 
         for x in range(width):
             for y in range(height):
-
                 r, g, b = image_load[x, y]
-
-                r = (r // 64) * 64
-                g = (g // 64) * 64
-                b = (b // 64) * 64
-
+                r = min((r // 64) * 64, 255)
+                g = min((g // 64) * 64, 255)
+                b = min((b // 64) * 64, 255)
                 image_load[x, y] = (r, g, b)
 
         return image
 
-    def gaussian_blur(self, image):
-        image_load = image.load()
-        width, height = image.size
-        copy = image.copy().load()
-
-        print(image.size)
-                
-        kernel = [
-                    [0, 0, 1, 2, 1, 0, 0],
-                    [0, 3, 13, 22, 13, 3, 0],
-                    [1, 13, 59, 97, 59, 13, 1],
-                    [2, 22, 97, 159, 97, 22, 2],
-                    [1, 13, 59, 97, 59, 13, 1],
-                    [0, 3, 13, 22, 13, 3, 0],
-                    [0, 0, 1, 2, 1, 0, 0]
-                ]
-
-        for row in range(width):
-            if row % 100 == 0:
-                print(f"Row {row} done")
-
-            for column in range(height):
-
-                r_total = 0
-                g_total = 0
-                b_total = 0
-                count = 0
-
-
-
-                for i in range(-3,4):
-                    for j in range(-3,4):
-
-                        if (row+i >= 0 and row+i < width and column+j >= 0 and column+j < height):
-
-                            n = kernel[i+3][j+3]
-                            r, g, b = copy[row+i,column+j]
-
-                            count += n
-
-                            r_total += (r * n)
-                            g_total += (g * n)
-                            b_total += (b * n)
-
-                image_load[row,column] = (r_total//count, g_total//count, b_total//count)
-
-        return image
-        
     def invert(self, image):
-        '''inverts image colors, ig black to white. not much used alone but in combinition with others'''
+        '''inverts image colors — black to white and vice versa'''
 
         image_load = image.load()
         width, height = image.size
 
         for row in range(width):
             for column in range(height):
-                r,g,b = image_load[row,column]
-                image_load[row,column] = (255-r, 255-g, 255-b)
-        
+                r, g, b = image_load[row, column]
+                image_load[row, column] = (255 - r, 255 - g, 255 - b)
+
         return image
 
     def edge_detect(self, image):
+        '''full Canny-style edge detection: grayscale → gaussian blur → sobel → NMS → hysteresis'''
+
         gray_image = self.grayscale(image)
-        gaussian_image = self.gaussian_blur(gray_image)
+        gaussian_image = self.blur(gray_image)
 
         image_load = gaussian_image.load()
         copy = gaussian_image.copy().load()
         width, height = gaussian_image.size
 
-        magnitude = [[0 for _ in range(height)] for _ in range(width)]
-        direction = [[0 for _ in range(height)] for _ in range(width)]
+        magnitude = [[0] * height for _ in range(width)]
+        direction = [[0] * height for _ in range(width)]
 
         sobel_x = [
             [-1, 0, 1],
             [-2, 0, 2],
-            [-1, 0, 1]
+            [-1, 0, 1],
         ]
-
         sobel_y = [
             [-1, -2, -1],
             [ 0,  0,  0],
-            [ 1,  2,  1]
+            [ 1,  2,  1],
         ]
 
         for row in range(width):
             for column in range(height):
-                
+
                 gx = 0
                 gy = 0
-                
-                for i in range(-1,2):
-                    for j in range(-1,2):
 
-                        if (row+i >= 0 and row+i < width and column+j >= 0 and column+j < height):
+                for i in range(-1, 2):
+                    for j in range(-1, 2):
+                        if 0 <= row + i < width and 0 <= column + j < height:
+                            p = copy[row + i, column + j][0]
+                            gx += p * sobel_x[i + 1][j + 1]
+                            gy += p * sobel_y[i + 1][j + 1]
 
-                            p = copy[row+i,column+j][0]  # since it's grayscale, r=g=b, so we can just take one channel
-                            gx += p * sobel_x[i+1][j+1]
-                            gy += p * sobel_y[i+1][j+1]
-                                    
-
-                g = int(math.sqrt(gx**2 + gy**2))
-                if g > 255:
-                    g = 255
+                g = int(math.sqrt(gx ** 2 + gy ** 2))
+                g = min(g, 255)
 
                 angle = math.degrees(math.atan2(gy, gx))
                 if angle < 0:
@@ -246,8 +181,9 @@ class filters:
 
                 magnitude[row][column] = g
                 direction[row][column] = angle
-            
-        new_magnitude = [[0 for _ in range(height)] for _ in range(width)]
+
+        # Non-maximum suppression
+        nms = [[0] * height for _ in range(width)]
 
         for row in range(1, width - 1):
             for column in range(1, height - 1):
@@ -256,174 +192,121 @@ class filters:
                 angle = direction[row][column]
 
                 if angle == 0:
-                    neighbor1 = magnitude[row][column - 1]
-                    neighbor2 = magnitude[row][column + 1]
-
+                    n1 = magnitude[row][column - 1]
+                    n2 = magnitude[row][column + 1]
                 elif angle == 45:
-                    neighbor1 = magnitude[row - 1][column + 1]
-                    neighbor2 = magnitude[row + 1][column - 1]
-
+                    n1 = magnitude[row - 1][column + 1]
+                    n2 = magnitude[row + 1][column - 1]
                 elif angle == 90:
-                    neighbor1 = magnitude[row - 1][column]
-                    neighbor2 = magnitude[row + 1][column]
-
+                    n1 = magnitude[row - 1][column]
+                    n2 = magnitude[row + 1][column]
                 else:  # 135
-                    neighbor1 = magnitude[row - 1][column - 1]
-                    neighbor2 = magnitude[row + 1][column + 1]
+                    n1 = magnitude[row - 1][column - 1]
+                    n2 = magnitude[row + 1][column + 1]
 
-                if current >= neighbor1 and current >= neighbor2:
-                    new_magnitude[row][column] = current
-                else:
-                    new_magnitude[row][column] = 0
+                nms[row][column] = current if current >= n1 and current >= n2 else 0
 
+        # Double thresholding
         high = 30
         low = 15
 
-        strong = 255
-        weak = 75
-        
-        nms = new_magnitude
-
-        dt = [[0 for _ in range(height)] for _ in range(width)]
+        dt = [[0] * height for _ in range(width)]
 
         for row in range(width):
             for column in range(height):
-
                 val = nms[row][column]
-
                 if val >= high:
-                    dt[row][column] = 255   # strong edge
-
+                    dt[row][column] = 255
                 elif val >= low:
-                    dt[row][column] = 75    # weak edge
-
+                    dt[row][column] = 75
                 else:
-                    dt[row][column] = 0     # noise
+                    dt[row][column] = 0
 
-        final = [[0 for _ in range(height)] for _ in range(width)]
-        copy_final = [[0 for _ in range(height)] for _ in range(width)]
+        # Hysteresis — keep weak edges only if connected to a strong edge
+        final = [[0] * height for _ in range(width)]
 
         for row in range(1, width - 1):
             for column in range(1, height - 1):
-
                 if dt[row][column] == 255:
                     final[row][column] = 255
-
                 elif dt[row][column] == 75:
-                    # check neighbors
-                    if (
-                        dt[row-1][column-1] == 255 or
-                        dt[row-1][column] == 255 or
-                        dt[row-1][column+1] == 255 or
-                        dt[row][column-1] == 255 or
-                        dt[row][column+1] == 255 or
-                        dt[row+1][column-1] == 255 or
-                        dt[row+1][column] == 255 or
-                        dt[row+1][column+1] == 255
+                    if any(
+                        dt[row + di][column + dj] == 255
+                        for di in range(-1, 2)
+                        for dj in range(-1, 2)
+                        if not (di == 0 and dj == 0)
                     ):
                         final[row][column] = 255
-                    else:
-                        final[row][column] = 0
 
         for row in range(width):
             for column in range(height):
-                image_load[row, column] = (final[row][column],
-                                        final[row][column],
-                                        final[row][column])
-                
-        copy_final = [row[:] for row in final]
-        for x in range(1, width-1):
-            for y in range(1, height-1):
+                v = final[row][column]
+                image_load[row, column] = (v, v, v)
 
-             count = 0
-             
-             for i in range(-1,2):
-                    for j in range(-1,2):
-                        if final[x+i][y+j] == 255:
-                            count += 1
+        return gaussian_image
 
-                        if 2 <= count <= 4:
-                             copy_final[x][y] = 255
-
-                
-        return  image
-
-    def painterly(self,image): 
-
-        '''makes the image look like a canvas painting by replacing each pixel with the average color of the most common intensity level in its neighborhood'''
+    def painterly(self, image):
+        '''makes the image look like a canvas painting by replacing each pixel
+        with the average color of the most common intensity level in its neighborhood'''
 
         print(image.size)
-        
-        # Optional: shrink very large images while preserving aspect ratio
 
         max_dimension = 1500
-        
         width, height = image.size
-        
+
         if max(width, height) > max_dimension:
             scale = max_dimension / max(width, height)
-        
             new_width = int(width * scale)
             new_height = int(height * scale)
-        
             image = image.resize((new_width, new_height))
-        
             print(f"Resized: {width}x{height} -> {new_width}x{new_height}")
 
+        # FIX: use a true copy so reads aren't contaminated by writes
+        copy_image = image.copy()
         img = image.load()
-        width, height = image.size
-        copy = image.load()
+        copy = copy_image.load()
 
-        # use there two variables as tunning knobs to controll filter strength. 
+        width, height = image.size
+
         levels = 4
         blend_strength = 0.9
 
-        # reach for each row and column of the image
         for row in range(width):
-
-            # print progress every 100 rows for seeing how much is done
             if row % 100 == 0:
                 print(f"Row {row} done")
-        
+
             for column in range(height):
 
-                # 8 levels... 256/8 = 32... so each level is 32 intensity values. For example, level 0 is 0-31, level 1 is 32-63, and so on. This way we can group pixels based on their intensity and find the dominant intensity level in the neighborhood.
-                # we check a 7x7 neighborhood around the pixel (row, column) and count how many pixels fall into each intensity level. We also sum up the r, g, b values for each level to calculate the average color later.
-               
-                count = [0] * levels
-                sum_r = [0] * levels
-                sum_g = [0] * levels
-                sum_b = [0] * levels
+                count  = [0] * levels
+                sum_r  = [0] * levels
+                sum_g  = [0] * levels
+                sum_b  = [0] * levels
 
-                # these 2 loops reach for 7x7 grid arround pixel in consideration.
-                for i in range(-3,4):
-                    for j in range(-3,4):
+                cr, cg, cb = copy[row, column]
 
-                        # we check if our grid is getting out of image boundaries, iif yes, then bound it to the edge of the image. This way we can handle edge pixels without going out of bounds.
-                        if row+i >= 0 and row+i < width and column+j >= 0 and column+j < height:
+                for i in range(-3, 4):
+                    for j in range(-3, 4):
+                        if 0 <= row + i < width and 0 <= column + j < height:
 
-                            r,g,b = copy[row+i,column+j]
-
-                            cr, cg, cb = copy[row, column] 
                             nr, ng, nb = copy[row + i, column + j]
 
                             diff = abs(cr - nr) + abs(cg - ng) + abs(cb - nb)
-
                             if diff > 100:
-                                continue  # don't mix across edges
-                            
-                            # calculate the intensity of the pixel and determine which level it belongs to. We use integer division to find the level index, and we also ensure that the level index does not exceed the maximum level.
-                            intensity = (r + g + b) // 3
-                            level = (intensity * levels) // 256
-                            level = min(level, levels - 1)
+                                continue
+
+                            intensity = (nr + ng + nb) // 3
+                            level = min((intensity * levels) // 256, levels - 1)
 
                             count[level] += 1
-                            sum_r[level] += r
-                            sum_g[level] += g
-                            sum_b[level] += b
-                
-                # we find the index of highest count, which corresponds to the dominant intensity level in the neighborhood. Then we calculate the average r, g, b values for that level by dividing the sum of r, g, b by the count of pixels in that level. Finally, we set the pixel at (row, column) to the average color of the dominant intensity level.
+                            sum_r[level] += nr
+                            sum_g[level] += ng
+                            sum_b[level] += nb
+
                 dominant = count.index(max(count))
+
+                # Guard against an empty bucket (all neighbors skipped by edge filter)
+                if count[dominant] == 0:
+                    continue
 
                 avg_r = sum_r[dominant] // count[dominant]
                 avg_g = sum_g[dominant] // count[dominant]
@@ -431,106 +314,81 @@ class filters:
 
                 r, g, b = img[row, column]
 
-                final_r = int(r * (1 - blend_strength) + avg_r * blend_strength)
-                final_g = int(g * (1 - blend_strength) + avg_g * blend_strength)
-                final_b = int(b * (1 - blend_strength) + avg_b * blend_strength)
-
-
-                img[row,column] = (final_r, final_g, final_b)
+                img[row, column] = (
+                    int(r * (1 - blend_strength) + avg_r * blend_strength),
+                    int(g * (1 - blend_strength) + avg_g * blend_strength),
+                    int(b * (1 - blend_strength) + avg_b * blend_strength),
+                )
 
         return image
 
-    def sepia(self, image): 
-        '''sepia filter that gives the image a warm, brownish tone by applying a specific transformation to the r, g, b values of each pixel. The transformation is based on a common sepia formula that uses weighted sums of the original r, g, b values to calculate the new r, g, b values. We also ensure that the new r, g, b values do not exceed 255 to maintain valid color values.'''
+    def sepia(self, image):
+        '''warm, brownish vintage tone'''
 
         img = image.load()
         width, height = image.size
 
-        # reach for each pixel in the image
         for row in range(width):
             for column in range(height):
+                r, g, b = img[row, column]
+                tr = min(round(0.393 * r + 0.769 * g + 0.189 * b), 255)
+                tg = min(round(0.349 * r + 0.686 * g + 0.168 * b), 255)
+                tb = min(round(0.272 * r + 0.534 * g + 0.131 * b), 255)
+                img[row, column] = (tr, tg, tb)
 
-                r,g,b = img[row,column]
-
-                # apply the sepia transformation to calculate the new r, g, b values. The transformation uses specific coefficients for r, g, b to create the sepia effect. We also round the results to get integer color values and ensure that they do not exceed 255.
-                tr = round(0.393*r + 0.769*g + 0.189*b)
-                tg = round(0.349*r + 0.686*g + 0.168*b)
-                tb = round(0.272*r + 0.534*g + 0.131*b)
-                if tr > 255:
-                    tr = 255
-                if tg > 255:
-                    tg = 255
-                if tb > 255:
-                    tb = 255
-                img[row,column] = (tr,tg,tb)
-        
         return image
 
-    def horizontal_flip(self, image): 
-        '''flips horizontally by swapping pixels on the left side of the image with corresponding pixels on the right side. We iterate through each row and swap pixels until we reach the middle of the image, effectively creating a mirror image along the vertical axis.'''
+    def horizontal_flip(self, image):
+        '''mirrors image left-to-right'''
 
         img = image.load()
         width, height = image.size
+
         for row in range(width // 2):
             for column in range(height):
-                temp = img[row,column]
-                img[row,column] = img[width-row-1,column]
-                img[width-row-1,column] = temp
+                temp = img[row, column]
+                img[row, column] = img[width - row - 1, column]
+                img[width - row - 1, column] = temp
 
         return image
-    
-    def vertical_flip(self, image): 
-        '''flips vertically by swapping pixels on the top half of the image with corresponding pixels on the bottom half. We iterate through each column and swap pixels until we reach the middle of the image, effectively creating a mirror image along the horizontal axis.'''
+
+    def vertical_flip(self, image):
+        '''mirrors image top-to-bottom'''
 
         img = image.load()
         width, height = image.size
+
         for row in range(width):
             for column in range(height // 2):
-                temp = img[row,column]
-                img[row,column] = img[row,height-column-1]
-                img[row,height-column-1] = temp
+                temp = img[row, column]
+                img[row, column] = img[row, height - column - 1]
+                img[row, height - column - 1] = temp
 
         return image
-    
-   
-        '''fun filter that inverts the colors of the image by subtracting each r, g, b value from 255. This creates a negative effect where light areas become dark and dark areas become light. We iterate through each pixel and apply this transformation to achieve the desired result.'''
+
+    def negative(self, image):
+        '''photographic negative — inverts every channel'''
 
         img = image.load()
         width, height = image.size
+
         for row in range(width):
             for column in range(height):
-                r,g,b = img[row,column]
-                img[row,column] = (255-r, 255-g, 255-b)
-
-        return image
-
-    def quantize(self, image):
-
-        image_load = image.load()
-        width, height = image.size
-
-        for x in range(width):
-            for y in range(height):
-
-                r, g, b = image_load[x, y]
-
-                r = (r // 64) * 64
-                g = (g // 64) * 64
-                b = (b // 64) * 64
-
-                image_load[x, y] = (r, g, b)
+                r, g, b = img[row, column]
+                img[row, column] = (255 - r, 255 - g, 255 - b)
 
         return image
 
     def sketch(self, image):
-        '''sketch filter that creates a pencil sketch effect by first converting the image to grayscale and then applying an edge detection algorithm. The edge detection highlights the contours of objects in the image, giving it a hand-drawn appearance. We can achieve this by using the edge_detect method we implemented earlier after converting the image to grayscale.'''
+        '''pencil sketch effect: grayscale → edge detect → invert'''
 
         gray_image = self.grayscale(image)
         sketch_image = self.edge_detect(gray_image)
-        inverted_sketch = self.invert(sketch_image)
-        return inverted_sketch
+        return self.invert(sketch_image)
 
     def pixelate(self, image):
+        '''reduces resolution to create a blocky effect'''
+
         image = image.convert("RGB")
         image_load = image.load()
         width, height = image.size
@@ -539,7 +397,6 @@ class filters:
         for x in range(0, width, block_size):
             for y in range(0, height, block_size):
 
-                # Collect all pixels in this block
                 red, green, blue = 0, 0, 0
                 count = 0
 
@@ -553,12 +410,10 @@ class filters:
                         blue  += b
                         count += 1
 
-                # Average colour for the whole block (outside inner loops)
                 avg_r = red   // count
                 avg_g = green // count
                 avg_b = blue  // count
 
-                # Paint every pixel in the block with the average
                 for bx in range(block_size):
                     for by in range(block_size):
                         px = min(x + bx, width - 1)
@@ -566,28 +421,34 @@ class filters:
                         image_load[px, py] = (avg_r, avg_g, avg_b)
 
         return image
-    
-    def vigennete(self, image, strength = 1.0):
+
+    def vigennete(self, image, strength=1.0):
+        '''darkens edges, drawing focus to the center'''
 
         image_load = image.load()
         width, height = image.size
-        max_height = height / 2
-        max_width = width / 2
-        max_distance = (max_height**2 + max_width**2)**0.5
-        for row in range(width): 
+        cx = width / 2
+        cy = height / 2
+        max_distance = (cx ** 2 + cy ** 2) ** 0.5
+
+        for row in range(width):
             for column in range(height):
-                distance = ((row - max_width)**2 + (column - max_height)**2)**0.5
-                farction = distance / max_distance
+                distance = ((row - cx) ** 2 + (column - cy) ** 2) ** 0.5
+                fraction = distance / max_distance
                 r, g, b = image_load[row, column]
-                new_r = r * (1 - farction * strength) 
-                new_g = g * (1 - farction * strength)
-                new_b = b * (1- farction * strength) 
-                image_load[row, column] = (round(new_r), round(new_g), round(new_b))
+                factor = max(0.0, 1 - fraction * strength)
+                image_load[row, column] = (
+                    round(r * factor),
+                    round(g * factor),
+                    round(b * factor),
+                )
+
         return image
 
     def cartoon(self, image):
-        
-        cartoon = self.gaussian_blur(image.copy())
+        '''combines blur, quantization, and edge overlay for a cartoon look'''
+
+        cartoon = self.blur(image.copy())
         cartoon = self.quantize(cartoon)
 
         edges = self.edge_detect(image.copy())
@@ -600,20 +461,20 @@ class filters:
 
         for x in range(width):
             for y in range(height):
-
                 if edge_load[x, y][0] < 128:
                     cartoon_load[x, y] = (0, 0, 0)
 
         return cartoon
-    
+
     def emboss(self, image):
-                
+        '''creates a raised, embossed texture effect'''
+
         image_load = image.load()
         width, height = image.size
         copy = image.copy().load()
 
         for row in range(width):
-            if (row % 100 == 0):
+            if row % 100 == 0:
                 print(f"row {row} done")
 
             for column in range(height):
@@ -624,54 +485,51 @@ class filters:
 
                 for i in range(-1, 2):
                     for j in range(-1, 2):
-
-                        if (0 <= row+i < width and
-                            0 <= column+j < height):
-
-                            r, g, b = copy[row+i, column+j]
-
-                            n = (i + 1) * (j + 1)  # simple emboss kernel
-
+                        if 0 <= row + i < width and 0 <= column + j < height:
+                            r, g, b = copy[row + i, column + j]
+                            n = (i + 1) * (j + 1)
                             r_total += r * n
                             g_total += g * n
                             b_total += b * n
 
-                r_total = max(0, min(255, r_total // 9 + 128))
-                g_total = max(0, min(255, g_total // 9 + 128))
-                b_total = max(0, min(255, b_total // 9 + 128))
-
                 image_load[row, column] = (
-                    r_total,
-                    g_total,
-                    b_total
+                    max(0, min(255, r_total // 9 + 128)),
+                    max(0, min(255, g_total // 9 + 128)),
+                    max(0, min(255, b_total // 9 + 128)),
                 )
 
         return image
-   def chromatic_aberration(self, image):
+
+    def chromatic_aberration(self, image):
+        '''color grading effect: maps brightness to a dark-purple → orange → red gradient'''
+
         image_load = image.load()
         width, height = image.size
         color1 = (20, 0, 80)
         color2 = (255, 140, 0)
         color3 = (255, 50, 50)
-        for row in range(width):
-          for column in range(height):
-            r, g, b = image_load[row, column]
-            brightness = (0.299*r + 0.587*g + 0.114*b) / 255
-            if brightness < 0.5:
-              t = brightness / 0.5
-              result_r = color1[0] * (1-t) + color2[0] * t
-              result_g = color1[1] * (1-t) + color2[1] * t 
-              result_b = color1[2] * (1-t) + color2[2] * t
-            else:
-              t = (brightness-0.5) / 0.5
-              result_r = color2[0] * (1-t) + color3[0] * t
-              result_g = color2[1] * (1-t) + color3[1] * t
-              result_b = color2[2] * (1-t) + color3[2] * t
-            result = (round(result_r), round(result_g), round(result_b))
 
-            # only apply to ~50% of pixels randomly
-            if random.random() > 0.6:
-                image_load[row, column] = result
+        for row in range(width):
+            for column in range(height):
+                r, g, b = image_load[row, column]
+                brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+
+                if brightness < 0.5:
+                    t = brightness / 0.5
+                    result_r = color1[0] * (1 - t) + color2[0] * t
+                    result_g = color1[1] * (1 - t) + color2[1] * t
+                    result_b = color1[2] * (1 - t) + color2[2] * t
+                else:
+                    t = (brightness - 0.5) / 0.5
+                    result_r = color2[0] * (1 - t) + color3[0] * t
+                    result_g = color2[1] * (1 - t) + color3[1] * t
+                    result_b = color2[2] * (1 - t) + color3[2] * t
+
+                if random.random() > 0.6:
+                    image_load[row, column] = (
+                        round(result_r),
+                        round(result_g),
+                        round(result_b),
+                    )
 
         return image
-
