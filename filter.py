@@ -504,6 +504,24 @@ class filters:
 
         return image
 
+    def quantize(self, image):
+
+        image_load = image.load()
+        width, height = image.size
+
+        for x in range(width):
+            for y in range(height):
+
+                r, g, b = image_load[x, y]
+
+                r = (r // 64) * 64
+                g = (g // 64) * 64
+                b = (b // 64) * 64
+
+                image_load[x, y] = (r, g, b)
+
+        return image
+
     def sketch(self, image):
         '''sketch filter that creates a pencil sketch effect by first converting the image to grayscale and then applying an edge detection algorithm. The edge detection highlights the contours of objects in the image, giving it a hand-drawn appearance. We can achieve this by using the edge_detect method we implemented earlier after converting the image to grayscale.'''
 
@@ -568,7 +586,7 @@ class filters:
         return image
 
     def cartoon(self, image):
-
+        
         cartoon = self.gaussian_blur(image.copy())
         cartoon = self.quantize(cartoon)
 
