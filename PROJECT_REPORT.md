@@ -76,7 +76,7 @@ The project demonstrates how to build a practical image processing tool with a c
 │  │  - apply_grayscale()                               │ │
 │  │  - apply_invert()                                  │ │
 │  │  - apply_sepia()                                   │ │
-│  │  - ... (all 10 filters)                            │ │
+│  │  - ... (all 11 filters)                            │ │
 │  └────────────────────────────────────────────────────┘ │
 │                       ↓                                   │
 │  ┌────────────────────────────────────────────────────┐ │
@@ -212,6 +212,7 @@ FILTERS = {
     "painterly":       ("Painterly",        apply_painterly),
     "horizontal_flip": ("Horizontal Flip",  apply_horizontal_flip),
     "vertical_flip":   ("Vertical Flip",    apply_vertical_flip),
+    "vigennete":       ("Vigennete",        apply_vigennete)
 }
 ```
 
@@ -532,6 +533,10 @@ image-filters/
 **Grayscale**
 - Converts RGB → single intensity value using luminosity formula
 - `0.299*R + 0.587*G + 0.114*B` (humans perceive green brightest)
+
+**Vigennte**
+- Use the distance formula to find the maximum distance between the centre and the coners and from that blacken the pixels further away from the centre
+- Use the distance formula. `((x2-x1)^2 - (y2-y1)^2)**0.5`
 
 **Invert**
 - Subtract each pixel from 255: `(255-R, 255-G, 255-B)`
