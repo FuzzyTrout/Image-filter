@@ -271,11 +271,12 @@ class filters:
         sketch_image = self.edge_detect(gray_image)
         inverted_sketch = self.invert(sketch_image)
         return inverted_sketch
+
     def pixelate(self, image):
         image = image.convert("RGB")
         image_load = image.load()
         width, height = image.size
-        block_size = 1000
+        block_size = 40
 
         for x in range(0, width, block_size):
             for y in range(0, height, block_size):
@@ -310,11 +311,11 @@ class filters:
 
 
 # create a filters object
-f = filters()
+# f = filters()
 
-# pick whichever filter you want to run
-result = f.pixelate(image)
-result = f.painterly(result)
-# save the result
-result.save("output.jpg")
-print("done!")
+# # pick whichever filter you want to run
+# result = f.pixelate(image)
+# result = f.painterly(result)
+# # save the result
+# result.save("output.jpg")
+# print("done!")
